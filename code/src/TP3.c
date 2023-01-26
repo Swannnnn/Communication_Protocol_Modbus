@@ -189,7 +189,7 @@ ErrorComm parseModbusResponse(char* i_trameReceive, int i_lengthTrameReceived, T
 			{
 				readen_value = ModBusShortAsciiToIeee(&value_buffer[nb_param*2], INTEL);
 
-				printf("\nreceived short value : %d\n", readen_value);
+				printf("\nreceived short value : %d", readen_value);
 			}
 			
 			

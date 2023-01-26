@@ -278,7 +278,6 @@ ModBusRead(char* trame, int i_index, unsigned char* lsb, unsigned char* msb, con
         *lsb = trame[i_index];
         *msb = trame[i_index+1];
     }
-    printf("\nat the end of the functiion ModBusRead");
 
     //return ;
 }
