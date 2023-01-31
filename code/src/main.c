@@ -99,7 +99,8 @@ int main (int argc, char** argv)
                 if (isSoketPort)
                     lengthTrameReceived = ModbusTCPIPToSerial(trameReceived, lengthTrameReceived, INTEL);
 
-                codret = parseModbusResponse(trameReceived, lengthTrameReceived, requestType, typeVal);
+                if (requestType == REQUEST_READ)
+                    codret = parseModbusResponse(trameReceived, lengthTrameReceived, requestType, typeVal);
 
                 if (codret != ERRORCOMM_NOERROR)
                     printState(codret);

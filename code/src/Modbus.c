@@ -772,7 +772,7 @@ ErrorComm parseTrameModBus(char* trame, int lengthTrameReceive, char* values,  i
             break;}
 
             // traitement des erreurs
-            // erreur sur ecriture
+            // erreur sur ecriturecodeRetour
             case (MODBUS_FUNCTION_WRITE_BIT   - 128):;
             case (MODBUS_FUNCTION_WRITE_BITS   - 128):;
             case (MODBUS_FUNCTION_WRITE_WORD  - 128):;

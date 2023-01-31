@@ -13,6 +13,7 @@
 #define SRL_STOPBIT 1
 
 #define TIMEOUT 1000
+#define RCV_VAL_TYPE 0
 
 /*	 user defines end	 */
 
@@ -62,7 +63,7 @@ HANDLE connectionSerialPort()
 
      // A COMPLETER	ok
 
-	printf("numero de port com: ");
+	printf("\nnumero de port com? : ");
 	int com_port;
 	scanf("%d",&com_port);
 
@@ -87,11 +88,8 @@ HANDLE connectionSerialPort()
  */
 int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_typeVal)
 {
-	int lengthTrameSend = 0;
-	int startAdress = 0;
-	int nbParamsToread = 0;
-
-	int codeFunction = 0;
+	int lengthTrameSend, startAdress, nbParamsToread, codeFunction;
+	
 	/* USER CODE END */
 
 	switch(i_requestType)
@@ -100,47 +98,21 @@ int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_
 		case REQUEST_READ:{
 			printf("\n DEMANDE DE LECTURE\n");
 
-			printf("A partir de quelle adresse souhaitez-vous lire?\n");
+			printf("\nA partir de quelle adresse souhaitez-vous lire? : ");
             scanf("%d", &startAdress);
 
-			printf("Quel type de parametre voulez-vous lire? 0 (short) / 1 (int) / 2 (float)\n");
-            scanf("%d", i_typeVal);
+			//printf("\nQuel type de parametre voulez-vous lire? 0 (short) / 1 (int) / 2 (float)? ");
+            //scanf("%d", i_typeVal);
+			*i_typeVal = RCV_VAL_TYPE;
 
 			int nb_parameters;
-			printf("nombre de valeurs a lire: \n");
+			printf("\nnombre de valeurs a lire: ");
             scanf("%d", &nb_parameters);
 
             // A COMPLETER ok
 
-			
 			lengthTrameSend = makeTrameLecModBus(GlobaleAdresseRegulatorModbus, MODBUS_FUNCTION_READ_NWORDS, startAdress, nb_parameters, i_trameSend, INTEL);
 			
-			/*
-			if (*i_typeVal == TYPE_SHORT)
-			{
-				short value = 0;
-				printf("the value (short) to be written to the register: \n");
-				scanf("%d", &value);
-
-				makeTrameEcrModBusFromShort(DEVICE_ADRESS, codeFunction, startAdress, value, i_trameSend, INTEL);
-			}
-			else if (*i_typeVal == TYPE_INT)
-			{
-				int value = 0;
-				printf("the value (int) to be written to the register: \n");
-				scanf("%d", &value);
-
-				makeTrameEcrModBusFromInt(DEVICE_ADRESS, codeFunction, startAdress, value, i_trameSend, INTEL);
-			}
-			else if (*i_typeVal == TYPE_FLOAT)
-			{
-				float value = 0;
-				printf("the value (float) to be written to the register: \n");
-				scanf("%f", &value);
-
-				makeTrameEcrModBusFromFloat(DEVICE_ADRESS, codeFunction, startAdress, value, i_trameSend, INTEL);
-			}
-			*/
 
 			break;}
 
@@ -148,15 +120,26 @@ int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_
 		case REQUEST_WRITE:{
 			printf("\n DEMANDE D'ECRITURE\n");
 
-			printf("A partir de quelle adresse souhaitez-vous ecrire?\n");
+			printf("\nA partir de quelle adresse souhaitez-vous ecrire? : ");
             scanf("%d", &startAdress);
-			printf("Quel type de parametre voulez-vous ecrire? 0 (short) / 1 (int) / 2 (float)\n");
-            scanf("%d", i_typeVal);
-			printf("Entre la valeur a ecrire?\n");
+
+			//printf("Quel type de parametre voulez-vous ecrire? 0 (short) / 1 (int) / 2 (float)\n");
+            //scanf("%d", i_typeVal);
+			*i_typeVal = RCV_VAL_TYPE;
+
+			short value_to_write;
+			printf("\nEntre la valeur a ecrire? : ");
+			scanf("%d",&value_to_write);
 
             // A COMPLETER
 
+			lengthTrameSend = makeTrameEcrModBusFromShort(GlobaleAdresseRegulatorModbus, MODBUS_FUNCTION_WRITE_WORD, startAdress, value_to_write, i_trameSend, INTEL);
+
 			break;}
+		default:
+			printf("\nimpossible choice...");
+			return 0;
+			break;
 	}
 
 	return lengthTrameSend;
@@ -189,7 +172,7 @@ ErrorComm parseModbusResponse(char* i_trameReceive, int i_lengthTrameReceived, T
 			{
 				readen_value = ModBusShortAsciiToIeee(&value_buffer[nb_param*2], INTEL);
 
-				printf("\nreceived short value : %d", readen_value);
+				printf("\nReceived value = %d", readen_value);
 			}
 			
 			
