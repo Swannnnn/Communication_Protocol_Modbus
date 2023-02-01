@@ -15,9 +15,11 @@
 #define TIMEOUT 1000
 #define RCV_VAL_TYPE 0
 
+#define MODBUSREG_ADRESS 1
+
 /*	 user defines end	 */
 
-int GlobaleAdresseRegulatorModbus = 1;
+int Globale_ip_clientserver_choice;
 
 void printState(ErrorComm codret)
 {
@@ -51,7 +53,46 @@ SOCKET connectionTCPIpPort()
     BOOL connexionOk = FALSE;
     SOCKET idConnexionSocket = INVALID_SOCKET;
 
-    // A COMPLETER
+    // A COMPLETER ok
+
+	int isClient, port = 0;
+
+	activeWinsocket();
+
+	int protocole_type;
+	printf("\nProtocole TCP (0) ou UDP (1)? : ");
+	scanf("%d",&protocole_type);
+
+	printf("\nVous etes serveur (0) ou client (1)? : ");
+	scanf("%d",&isClient);
+
+	if (protocole_type == 0)
+	{		
+		printf("\nEntrez le numero de port : ");
+		scanf("%d",&port);
+
+		idConnexionSocket = createSocket(512,0/*TCP*/,TIMEOUT,TIMEOUT);
+
+		switch (isClient)
+		{
+		case 0: /* serveur */
+			idConnexionSocket = acceptSocket(idConnexionSocket,port,5);
+			break;
+
+		case 1: /* client */
+			char ipAdress[16];
+			printf("\nEntrez l'adresse IP du serveur : ");
+			scanf("%s",&ipAdress);
+
+			int connexionOk = connectSocket(idConnexionSocket,ipAdress,port);
+			if (connexionOk != 1)
+				printf("\nConnection failed");
+			break;
+		
+		default:
+			break;
+		}
+	}
 
     return idConnexionSocket;
 }
@@ -89,7 +130,7 @@ HANDLE connectionSerialPort()
 int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_typeVal)
 {
 	int lengthTrameSend, startAdress, nbParamsToread, codeFunction;
-	
+
 	/* USER CODE END */
 
 	switch(i_requestType)
@@ -111,7 +152,7 @@ int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_
 
             // A COMPLETER ok
 
-			lengthTrameSend = makeTrameLecModBus(GlobaleAdresseRegulatorModbus, MODBUS_FUNCTION_READ_NWORDS, startAdress, nb_parameters, i_trameSend, INTEL);
+			lengthTrameSend = makeTrameLecModBus(MODBUSREG_ADRESS, MODBUS_FUNCTION_READ_NWORDS, startAdress, nb_parameters, i_trameSend, INTEL);
 			
 
 			break;}
@@ -133,7 +174,7 @@ int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_
 
             // A COMPLETER
 
-			lengthTrameSend = makeTrameEcrModBusFromShort(GlobaleAdresseRegulatorModbus, MODBUS_FUNCTION_WRITE_WORD, startAdress, value_to_write, i_trameSend, INTEL);
+			lengthTrameSend = makeTrameEcrModBusFromShort(MODBUSREG_ADRESS, MODBUS_FUNCTION_WRITE_WORD, startAdress, value_to_write, i_trameSend, INTEL);
 
 			break;}
 		default:

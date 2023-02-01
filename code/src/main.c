@@ -18,8 +18,12 @@ int main (int argc, char** argv)
     printf("****************************************************************************\n");
     printf("*                             PROTOCOLE MODBUS                             *\n");
     printf("****************************************************************************\n");
+
+    /*
     printf("Saisir le type de communication: 0 (liaison Serie) / 1 (liaison IP)  ? ");
     scanf("%d", &isSoketPort);
+    */
+   isSoketPort = 0;
 
     //*******************************************************************************
         // Creation et ouverture du support de communication
@@ -71,17 +75,27 @@ int main (int argc, char** argv)
 
             //*******************************************************************************
             // Envoie de la requete Modbus sur le supporte de communication et reception de la trame reponse
-            if (lengthTrameToSend)
-            {
-                 // A COMPLETER
 
+            // A COMPLETER
+
+            if (!lengthTrameToSend)
+            {
+                printf("\nError when sending the trame, trame is empty...");
+                return 1;
+            }
+
+            if (isSoketPort)
+                printf("\nnothing has been coded in this part..."); //nothing
+            else
+            {
                 printf("\nsendAndReceiveSerialPort\n");
 
-                 codret = sendAndReceiveSerialPort(handleSerialPort, TIMEOUT, trameToSend, lengthTrameToSend, trameReceived, &lengthTrameReceived);
-                 
-                 if (codret != ERRORCOMM_NOERROR)
-                    printState(codret);
+                codret = sendAndReceiveSerialPort(handleSerialPort, TIMEOUT, trameToSend, lengthTrameToSend, trameReceived, &lengthTrameReceived);
+            
             }
+
+            if (codret != ERRORCOMM_NOERROR)
+                printState(codret);
 
             //*******************************************************************************
             //Decodage de la trame reçue
