@@ -2,10 +2,8 @@
 #include <stdio.h>
 #include <sys/types.h>
 
-#include "TP3.h"
+#include "tramesBuilding.h"
 #include "Modbus.h"
-
-#define TIMEOUT 1000
 
 int main (int argc, char** argv)
 {
@@ -18,19 +16,14 @@ int main (int argc, char** argv)
     printf("****************************************************************************\n");
     printf("*                             PROTOCOLE MODBUS                             *\n");
     printf("****************************************************************************\n");
-
-    /*
-    printf("Saisir le type de communication: 0 (liaison Serie) / 1 (liaison IP)  ? ");
-    scanf("%d", &isSoketPort);
-    */
-   isSoketPort = 0;
+    printf("baudrate: %d, bite size: %d, bit parity: %d, stop bit: %d, regulator adress: %d", SRL_BAUDRATE, SRL_BYTE_SZ, SRL_PARITY, SRL_STOPBIT, MODBUSREG_ADRESS);
+    
 
     //*******************************************************************************
         // Creation et ouverture du support de communication
-    if (isSoketPort)
-        idConnexionSocket = connectionTCPIpPort();
-    else
+
         handleSerialPort = connectionSerialPort();
+
     //*******************************************************************************
 
     if (handleSerialPort || (idConnexionSocket != INVALID_SOCKET) )
@@ -40,9 +33,9 @@ int main (int argc, char** argv)
 
         while (requestType != REQUEST_QUIT)
         {
-            char trameToSend[100];
+            char trameToSend[ARRAY_MAX_SIZE];
             int lengthTrameToSend = 0;
-            char trameReceived[100];
+            char trameReceived[ARRAY_MAX_SIZE];
             int lengthTrameReceived = 99;
             memset(trameReceived,'\0',sizeof(trameReceived));
 
@@ -63,9 +56,6 @@ int main (int argc, char** argv)
             else
                 continue;
 
-            if (isSoketPort)
-                lengthTrameToSend = ModbusSerialToTCPIP(trameToSend, lengthTrameToSend, INTEL);
-
             printf("\n Send trame (length = %i):", lengthTrameToSend);
             for (i = 0; i < lengthTrameToSend ; i++)
             {
@@ -76,24 +66,15 @@ int main (int argc, char** argv)
             //*******************************************************************************
             // Envoie de la requete Modbus sur le supporte de communication et reception de la trame reponse
 
-            // A COMPLETER
-
             if (!lengthTrameToSend)
             {
                 printf("\nError when sending the trame, trame is empty...");
                 return 1;
             }
 
-            if (isSoketPort)
-                printf("\nnothing has been coded in this part..."); //nothing
-            else
-            {
-                printf("\nsendAndReceiveSerialPort\n");
-
-                codret = sendAndReceiveSerialPort(handleSerialPort, TIMEOUT, trameToSend, lengthTrameToSend, trameReceived, &lengthTrameReceived);
+            /* Sending the trameToSend to the serial port and receiving the response in trameReceived. */
+            codret = sendAndReceiveSerialPort(handleSerialPort, TIMEOUT, trameToSend, lengthTrameToSend, trameReceived, &lengthTrameReceived);
             
-            }
-
             if (codret != ERRORCOMM_NOERROR)
                 printState(codret);
 
@@ -110,9 +91,7 @@ int main (int argc, char** argv)
                     printf("%02X ",(unsigned char)trameReceived[i]);
                 printf("\n");
 
-                if (isSoketPort)
-                    lengthTrameReceived = ModbusTCPIPToSerial(trameReceived, lengthTrameReceived, INTEL);
-
+                /* Parsing the response from the Modbus device. */
                 if (requestType == REQUEST_READ)
                     codret = parseModbusResponse(trameReceived, lengthTrameReceived, requestType, typeVal);
 

@@ -10,7 +10,7 @@
                 "src/*.c",
                 "-lws2_32",
                 "-o",
-                "tp3.exe"
+                "Exam.exe"
             ],
             "group": "build",
             "presentation": {

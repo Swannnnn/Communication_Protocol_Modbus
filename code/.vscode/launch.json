@@ -8,7 +8,7 @@
             "name": "(gdb) Lancer",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}\\tp3.exe",
+            "program": "${workspaceFolder}\\Exam.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

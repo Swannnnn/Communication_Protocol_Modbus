@@ -3,21 +3,8 @@
 #include <string.h>
 
 #include "Modbus.h"
-#include "TP3.h"
+#include "tramesBuilding.h"
 
-/*	 user defines begin	 */
-
-#define SRL_BAUDRATE 9600
-#define SRL_BYTE_SZ 8
-#define SRL_PARITY 0
-#define SRL_STOPBIT 1
-
-#define TIMEOUT 1000
-#define RCV_VAL_TYPE 0
-
-#define MODBUSREG_ADRESS 1
-
-/*	 user defines end	 */
 
 int Globale_ip_clientserver_choice;
 
@@ -48,68 +35,26 @@ void printState(ErrorComm codret)
 	return;
 }
 
-SOCKET connectionTCPIpPort()
-{
-    BOOL connexionOk = FALSE;
-    SOCKET idConnexionSocket = INVALID_SOCKET;
 
-    // A COMPLETER ok
-
-	int isClient, port = 0;
-
-	activeWinsocket();
-
-	int protocole_type;
-	printf("\nProtocole TCP (0) ou UDP (1)? : ");
-	scanf("%d",&protocole_type);
-
-	printf("\nVous etes serveur (0) ou client (1)? : ");
-	scanf("%d",&isClient);
-
-	if (protocole_type == 0)
-	{		
-		printf("\nEntrez le numero de port : ");
-		scanf("%d",&port);
-
-		idConnexionSocket = createSocket(512,0/*TCP*/,TIMEOUT,TIMEOUT);
-
-		switch (isClient)
-		{
-		case 0: /* serveur */
-			idConnexionSocket = acceptSocket(idConnexionSocket,port,5);
-			break;
-
-		case 1: /* client */
-			char ipAdress[16];
-			printf("\nEntrez l'adresse IP du serveur : ");
-			scanf("%s",&ipAdress);
-
-			int connexionOk = connectSocket(idConnexionSocket,ipAdress,port);
-			if (connexionOk != 1)
-				printf("\nConnection failed");
-			break;
-		
-		default:
-			break;
-		}
-	}
-
-    return idConnexionSocket;
-}
-
+/**
+ * It opens a serial port, sets the parameters, and returns the handle
+ * 
+ * @return A handle to the serial port.
+ */
 HANDLE connectionSerialPort()
 {
     BOOL connexionOk = FALSE;
     HANDLE handleSerialPort = NULL;
 
-     // A COMPLETER	ok
-
+	/* Asking the user to enter the COM port number. */
 	printf("\nnumero de port com? : ");
 	int com_port;
 	scanf("%d",&com_port);
 
+	/* Creating a serial port. */
 	handleSerialPort = createSerialPort(com_port);
 
+	/* Setting the parameters of the serial port. */
 	if (setParamSerialPort(handleSerialPort, SRL_BAUDRATE, SRL_BYTE_SZ, SRL_PARITY, SRL_STOPBIT) == 0)
 		return NULL;
 
@@ -118,20 +63,20 @@ HANDLE connectionSerialPort()
 
 
 /**
- * It asks the user for a request type, a starting address, a type of value to read/write, and a value
- * to write. It then creates a trame to send to the PLC
+ * It creates a trame to send to the regulator
  * 
- * @param i_requestType the type of request (read or write)
- * @param i_trameSend the trame to be sent
- * @param i_typeVal the type of the value to be read or written.
+ * @param i_requestType The type of request to be sent to the PLC.
+ * @param i_trameSend The trame to send to the PLC.
+ * @param i_typeVal This is a pointer to a variable of type TypeVal.
  * 
- * @return The length of the trame.
+ * @return The length of the trame to send to the PLC.
  */
 int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_typeVal)
 {
 	int lengthTrameSend, startAdress, nbParamsToread, codeFunction;
 
-	/* USER CODE END */
+	/* Setting the value of the pointer `i_typeVal` to `RCV_VAL_TYPE` by default*/
+	*i_typeVal = RCV_VAL_TYPE;
 
 	switch(i_requestType)
 	{
@@ -142,19 +87,14 @@ int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_
 			printf("\nA partir de quelle adresse souhaitez-vous lire? : ");
             scanf("%d", &startAdress);
 
-			//printf("\nQuel type de parametre voulez-vous lire? 0 (short) / 1 (int) / 2 (float)? ");
-            //scanf("%d", i_typeVal);
-			*i_typeVal = RCV_VAL_TYPE;
-
+			/* Asking the user to enter the number of values to read. */
 			int nb_parameters;
 			printf("\nnombre de valeurs a lire: ");
             scanf("%d", &nb_parameters);
 
-            // A COMPLETER ok
-
+			/* Creating a trame to send to the PLC. */
 			lengthTrameSend = makeTrameLecModBus(MODBUSREG_ADRESS, MODBUS_FUNCTION_READ_NWORDS, startAdress, nb_parameters, i_trameSend, INTEL);
 			
-
 			break;}
 
 		// Deamnde d'ecriture
@@ -164,17 +104,26 @@ int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_
 			printf("\nA partir de quelle adresse souhaitez-vous ecrire? : ");
             scanf("%d", &startAdress);
 
-			//printf("Quel type de parametre voulez-vous ecrire? 0 (short) / 1 (int) / 2 (float)\n");
-            //scanf("%d", i_typeVal);
-			*i_typeVal = RCV_VAL_TYPE;
+			/* Asking the user to enter the number of values to write. */
+			int values_sz;
+			do
+			{
+				printf("\nEntre le nombre de valeurs a ecrire? : ");
+				scanf("%d",&values_sz);
 
-			short value_to_write;
-			printf("\nEntre la valeur a ecrire? : ");
-			scanf("%d",&value_to_write);
+			} while (values_sz > ARRAY_MAX_SIZE);
+			
 
-            // A COMPLETER
+			/* Asking the user to enter the values to write. */
+			short values_arr[ARRAY_MAX_SIZE];
+			for (int val_arr_index = 0; val_arr_index < values_sz; val_arr_index++)
+			{
+				printf("\nEnter the value [%d]: ",val_arr_index);
+				scanf("%d",&values_arr[val_arr_index]);
+			}
 
-			lengthTrameSend = makeTrameEcrModBusFromShort(MODBUSREG_ADRESS, MODBUS_FUNCTION_WRITE_WORD, startAdress, value_to_write, i_trameSend, INTEL);
+			/* Creating a trame to send to the PLC. */
+			lengthTrameSend = makeTrameEcrModBusFromShortTab(MODBUSREG_ADRESS, MODBUS_FUNCTION_WRITE_WORDS, startAdress, values_arr, values_sz, i_trameSend, INTEL);
 
 			break;}
 		default:
@@ -190,13 +139,8 @@ ErrorComm parseModbusResponse(char* i_trameReceive, int i_lengthTrameReceived, T
 {
 	ErrorComm codret = ERRORCOMM_ERROR;
 
-	char value_buffer[100];
-	int  nb_values_buffer;
-	int  adress_buffer;
-	int  codeFunction_buffer;
-
-
-    // A COMPLETER
+	char value_buffer[ARRAY_MAX_SIZE];
+	int  nb_values_buffer, adress_buffer, codeFunction_buffer;
 
 	switch (i_requestType)
 	{
@@ -207,10 +151,13 @@ ErrorComm parseModbusResponse(char* i_trameReceive, int i_lengthTrameReceived, T
 			
 			short readen_value= 0;
 
+			/* Parsing the received trame. */
 			codret = parseTrameModBus(i_trameReceive, i_lengthTrameReceived, value_buffer, &nb_values_buffer, &adress_buffer, &codeFunction_buffer, INTEL);
 
+			/* Printing the values received from the PLC. */
 			for (int nb_param = 0;nb_param<nb_values_buffer;nb_param++)
 			{
+				/* Converting the received value from the PLC to a short value. */
 				readen_value = ModBusShortAsciiToIeee(&value_buffer[nb_param*2], INTEL);
 
 				printf("\nReceived value = %d", readen_value);
