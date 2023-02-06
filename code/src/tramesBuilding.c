@@ -111,15 +111,19 @@ int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_
 				printf("\nEntre le nombre de valeurs a ecrire? : ");
 				scanf("%d",&values_sz);
 
-			} while (values_sz > ARRAY_MAX_SIZE);
+			} while (values_sz > ARRAY_MAX_SIZE); //array size limit
 			
 
 			/* Asking the user to enter the values to write. */
 			short values_arr[ARRAY_MAX_SIZE];
 			for (int val_arr_index = 0; val_arr_index < values_sz; val_arr_index++)
 			{
-				printf("\nEnter the value [%d]: ",val_arr_index);
-				scanf("%d",&values_arr[val_arr_index]);
+				do
+				{
+					printf("\nEnter the value [%d]: ",val_arr_index);
+					scanf("%d",&values_arr[val_arr_index]);
+
+				}while (abs(values_arr[val_arr_index]) > 32767); //type limit
 			}
 
 			/* Creating a trame to send to the PLC. */
