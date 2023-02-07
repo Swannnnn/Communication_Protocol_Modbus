@@ -21,8 +21,8 @@ int main (int argc, char** argv)
     
 
     //*******************************************************************************
-        // Creation et ouverture du support de communication
-
+        
+        //open a serial connection to the right com port
         handleSerialPort = connectionSerialPort();
 
     //*******************************************************************************
@@ -55,7 +55,6 @@ int main (int argc, char** argv)
             scanf("%d", &requestType);
 
             //*******************************************************************************
-            // Creation des trames de requete Modbus et envoie de ces trames
 
             /* Checking if the request type is read or write. If it is, it will call the function
             createRequestTrame. If it is not, it will continue. */
@@ -91,7 +90,6 @@ int main (int argc, char** argv)
             }
 
             //*******************************************************************************
-            //Decodage des trames reçue
             if (requestType == REQUEST_WRITE)
                 continue;
                         
@@ -124,9 +122,8 @@ int main (int argc, char** argv)
         }
 
         //*******************************************************************************
-        // Fermeture du support de communication
         
-        // A COMPLETER
+        terminateSerialPort(handleSerialPort);
         
         //*******************************************************************************
     }

@@ -6,7 +6,6 @@
 #include "tramesBuilding.h"
 
 
-int Globale_ip_clientserver_choice;
 
 void printState(ErrorComm codret)
 {
@@ -47,7 +46,7 @@ HANDLE connectionSerialPort()
     HANDLE handleSerialPort = NULL;
 
 	/* Asking the user to enter the COM port number. */
-	printf("\nnumero de port com? : ");
+	printf("\nCOM Port number? : ");
 	int com_port;
 	scanf("%d",&com_port);
 
@@ -62,14 +61,14 @@ HANDLE connectionSerialPort()
 }
 
 
+
 /**
- * It creates a trame to send to the regulator
+ * It creates trames to send to the regulator
  * 
- * @param i_requestType The type of request to be sent to the PLC.
- * @param i_trameSend The trame to send to the PLC.
- * @param i_typeVal This is a pointer to a variable of type TypeVal.
+ * @param i_requestType the type of request to be made.
+ * @param trames the array of trames to send to the regulator.
  * 
- * @return The length of the trame to send to the PLC.
+ * @return the error code.
  */
 ErrorComm createRequestTrame(TypeRequest i_requestType, TRAMES_HANDLER * trames)
 {
@@ -79,14 +78,14 @@ ErrorComm createRequestTrame(TypeRequest i_requestType, TRAMES_HANDLER * trames)
 	{
 		// Demande de lecture:
 		case REQUEST_READ:{
-			printf("\n DEMANDE DE LECTURE\n");
+			printf("\n READING DEMAND\n");
 
-			printf("\nA partir de quelle adresse souhaitez-vous lire? : ");
+			printf("\nFrom which address you want to read? : ");
             scanf("%d", &startAdress);
 
 			/* Asking the user to enter the number of values to read. */
 			int nb_parameters;
-			printf("\nnombre de valeurs a lire: ");
+			printf("\nNumber of values to read?: ");
             scanf("%d", &nb_parameters);
 
 			/* Creating the trames to send to the regulator. */
@@ -97,16 +96,16 @@ ErrorComm createRequestTrame(TypeRequest i_requestType, TRAMES_HANDLER * trames)
 
 		// Deamnde d'ecriture
 		case REQUEST_WRITE:{
-			printf("\n DEMANDE D'ECRITURE\n");
+			printf("\n WRITING DEMAND\n");
 
-			printf("\nA partir de quelle adresse souhaitez-vous ecrire? : ");
+			printf("\nFrom which address you want to read? : ");
             scanf("%d", &startAdress);
 
 			/* Asking the user to enter the number of values to write. */
 			int values_sz;
 			do
 			{
-				printf("\nEntre le nombre de valeurs a ecrire? : ");
+				printf("\nNumber of values to write? : ");
 				scanf("%d",&values_sz);
 
 			} while (values_sz > ARRAY_MAX_SIZE); //array size limit
@@ -138,6 +137,16 @@ ErrorComm createRequestTrame(TypeRequest i_requestType, TRAMES_HANDLER * trames)
 	return ERRORCOMM_NOERROR;
 }
 
+/**
+ * It parses the received trames and prints the values received from the regulator
+ * 
+ * @param i_trameReceive The received trame.
+ * @param i_lengthTrameReceived the length of the received trame
+ * @param i_requestType REQUEST_READ
+ * @param i_typeVal Type of value to be read.
+ * 
+ * @return the error code of the parsing.
+ */
 ErrorComm parseModbusResponse(char* i_trameReceive, int i_lengthTrameReceived, TypeRequest i_requestType, TypeVal i_typeVal)
 {
 	ErrorComm codret = ERRORCOMM_ERROR;
