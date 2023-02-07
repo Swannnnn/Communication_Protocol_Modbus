@@ -71,12 +71,9 @@ HANDLE connectionSerialPort()
  * 
  * @return The length of the trame to send to the PLC.
  */
-int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_typeVal)
+ErrorComm createRequestTrame(TypeRequest i_requestType, TRAMES_HANDLER * trames)
 {
-	int lengthTrameSend, startAdress, nbParamsToread, codeFunction;
-
-	/* Setting the value of the pointer `i_typeVal` to `RCV_VAL_TYPE` by default*/
-	*i_typeVal = RCV_VAL_TYPE;
+	int startAdress, nbParamsToread;
 
 	switch(i_requestType)
 	{
@@ -92,8 +89,9 @@ int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_
 			printf("\nnombre de valeurs a lire: ");
             scanf("%d", &nb_parameters);
 
-			/* Creating a trame to send to the PLC. */
-			lengthTrameSend = makeTrameLecModBus(MODBUSREG_ADRESS, MODBUS_FUNCTION_READ_NWORDS, startAdress, nb_parameters, i_trameSend, INTEL);
+			/* Creating the trames to send to the regulator. */
+			for (int channel=0; channel < MODBUSREG_CHANNEL_SZ; channel++)
+				trames[channel].lengthTrameToSend = makeTrameLecModBus(MODBUSREG_ADRESS, MODBUS_FUNCTION_READ_NWORDS, startAdress + (MODBUSREG_OFFSET * channel), nb_parameters, trames[channel].trameToSend, INTEL);
 			
 			break;}
 
@@ -126,17 +124,18 @@ int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_
 				}while (abs(values_arr[val_arr_index]) > 32767); //type limit
 			}
 
-			/* Creating a trame to send to the PLC. */
-			lengthTrameSend = makeTrameEcrModBusFromShortTab(MODBUSREG_ADRESS, MODBUS_FUNCTION_WRITE_WORDS, startAdress, values_arr, values_sz, i_trameSend, INTEL);
+			/* Creating the trames to send to the regulator. */
+			for (int channel=0; channel < MODBUSREG_CHANNEL_SZ; channel++)
+				trames[channel].lengthTrameToSend = makeTrameEcrModBusFromShortTab(MODBUSREG_ADRESS, MODBUS_FUNCTION_WRITE_WORDS, startAdress + (MODBUSREG_OFFSET * channel), values_arr, values_sz, trames[channel].trameToSend, INTEL);
 
 			break;}
 		default:
 			printf("\nimpossible choice...");
-			return 0;
+			return ERRORCOMM_EVENT;
 			break;
 	}
 
-	return lengthTrameSend;
+	return ERRORCOMM_NOERROR;
 }
 
 ErrorComm parseModbusResponse(char* i_trameReceive, int i_lengthTrameReceived, TypeRequest i_requestType, TypeVal i_typeVal)

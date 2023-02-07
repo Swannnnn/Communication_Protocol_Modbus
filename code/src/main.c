@@ -5,6 +5,7 @@
 #include "tramesBuilding.h"
 #include "Modbus.h"
 
+
 int main (int argc, char** argv)
 {
     int isSoketPort = 0;
@@ -26,18 +27,22 @@ int main (int argc, char** argv)
 
     //*******************************************************************************
 
-    if (handleSerialPort || (idConnexionSocket != INVALID_SOCKET) )
+    if (handleSerialPort)
     {
         TypeRequest requestType = NO_REQUEST;
-        TypeVal typeVal = NO_TYPE;
+        TypeVal typeVal = TYPE_SHORT;
 
         while (requestType != REQUEST_QUIT)
         {
-            char trameToSend[ARRAY_MAX_SIZE];
-            int lengthTrameToSend = 0;
-            char trameReceived[ARRAY_MAX_SIZE];
-            int lengthTrameReceived = 99;
-            memset(trameReceived,'\0',sizeof(trameReceived));
+
+            /* Initializing the array of trames. */
+            TRAMES_HANDLER trames[MODBUSREG_CHANNEL_SZ];
+            for (int init_index=0; init_index < MODBUSREG_CHANNEL_SZ; init_index++)
+            {
+                trames[init_index].lengthTrameToSend = 0;
+                trames[init_index].lengthTrameReceived = 99;
+                memset(trames[init_index].trameReceived,'\0',sizeof(trames[init_index].trameReceived)); 
+            }
 
             int i = 0;
             ErrorComm codret = ERRORCOMM_ERROR;
@@ -50,54 +55,71 @@ int main (int argc, char** argv)
             scanf("%d", &requestType);
 
             //*******************************************************************************
-            // Creation de la trame de requete Modbus
+            // Creation des trames de requete Modbus et envoie de ces trames
+
+            /* Checking if the request type is read or write. If it is, it will call the function
+            createRequestTrame. If it is not, it will continue. */
             if (requestType == REQUEST_READ || requestType == REQUEST_WRITE)
-                lengthTrameToSend = createRequestTrame(requestType, trameToSend, &typeVal);
+                codret = createRequestTrame(requestType, trames);
             else
                 continue;
 
-            printf("\n Send trame (length = %i):", lengthTrameToSend);
-            for (i = 0; i < lengthTrameToSend ; i++)
-            {
-                printf("%02X ",((unsigned char)trameToSend[i]));
-            }
-            printf("\n");
-
-            //*******************************************************************************
-            // Envoie de la requete Modbus sur le supporte de communication et reception de la trame reponse
-
-            if (!lengthTrameToSend)
-            {
-                printf("\nError when sending the trame, trame is empty...");
-                return 1;
-            }
-
-            /* Sending the trameToSend to the serial port and receiving the response in trameReceived. */
-            codret = sendAndReceiveSerialPort(handleSerialPort, TIMEOUT, trameToSend, lengthTrameToSend, trameReceived, &lengthTrameReceived);
-            
             if (codret != ERRORCOMM_NOERROR)
-                printState(codret);
-
-            //*******************************************************************************
-            //Decodage de la trame reçue
-            if (codret!=ERRORCOMM_NOERROR || lengthTrameReceived==0)
             {
                 printState(codret);
+                break;
             }
-            else
+
+            /* Sending each trame to the Modbus device by channel */
+            for (int channel=0; channel < MODBUSREG_CHANNEL_SZ; channel++)
             {
-                printf("\n Receive trame (length = %i): ", lengthTrameReceived);
-                for  (i = 0; i < lengthTrameReceived; i++)
-                    printf("%02X ",(unsigned char)trameReceived[i]);
-                printf("\n");
+                /* Printing the trame to send. */
+                printf("\n Send trame (length = %i):", trames[channel].lengthTrameToSend);
+                for (i = 0; i < trames[channel].lengthTrameToSend ; i++)
+                {
+                    printf("%02X ",((unsigned char)trames[channel].trameToSend[i]));
+                }
 
-                /* Parsing the response from the Modbus device. */
-                if (requestType == REQUEST_READ)
-                    codret = parseModbusResponse(trameReceived, lengthTrameReceived, requestType, typeVal);
-
+                /* Sending the trame to the Modbus device. */
+                codret = sendAndReceiveSerialPort(handleSerialPort, TIMEOUT, trames[channel].trameToSend, trames[channel].lengthTrameToSend, trames[channel].trameReceived, &trames[channel].lengthTrameReceived);
+                
                 if (codret != ERRORCOMM_NOERROR)
+                {
                     printState(codret);
+                    break;
+                }
+            }
+
             //*******************************************************************************
+            //Decodage des trames reçue
+            if (requestType == REQUEST_WRITE)
+                continue;
+                        
+            /* Parsing and Printing all the received trames. */
+            for (int channel=0; channel < MODBUSREG_CHANNEL_SZ; channel++)
+            {
+                printf("\n############### channel %d ###############", channel);
+                if (codret!=ERRORCOMM_NOERROR || trames[channel].lengthTrameReceived==0)
+                {
+                    printState(codret);
+                }
+                else
+                {
+                    /* Printing the received trame. */
+                    printf("\n Receive trame (length = %i): ", trames[channel].lengthTrameReceived);
+                    for  (i = 0; i < trames[channel].lengthTrameReceived; i++)
+                        printf("%02X ",(unsigned char)trames[channel].trameReceived[i]);
+                    printf("\n");
+
+                    
+                    /* Parsing the response from the Modbus device. */
+                    codret = parseModbusResponse(trames[channel].trameReceived, trames[channel].lengthTrameReceived, requestType, typeVal);
+
+                    if (codret != ERRORCOMM_NOERROR)
+                        printState(codret);
+                    
+                //*******************************************************************************
+                }
             }
         }
 

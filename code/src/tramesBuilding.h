@@ -24,6 +24,8 @@
 #define ARRAY_MAX_SIZE 100
 
 #define MODBUSREG_ADRESS 1
+#define MODBUSREG_OFFSET 1024
+#define MODBUSREG_CHANNEL_SZ 3
 
 /*	 user defines end	 */
 
@@ -44,12 +46,20 @@ typedef enum typeval {
 
   } TypeVal;
 
+  
+typedef struct{
+    char trameToSend[ARRAY_MAX_SIZE];
+    int lengthTrameToSend;
+    char trameReceived[ARRAY_MAX_SIZE];
+    int lengthTrameReceived;
+}TRAMES_HANDLER;
+
 
 void printState(ErrorComm codret);
 
 HANDLE connectionSerialPort();
 
-int createRequestTrame(TypeRequest i_requestType, char* i_trameSend, TypeVal* i_typeVal);
+ErrorComm createRequestTrame(TypeRequest i_requestType, TRAMES_HANDLER * trames);
 ErrorComm parseModbusResponse(char* i_trameReceive, int i_lengthTrameReceived, TypeRequest i_requestType, TypeVal i_typeVal);
 
 #endif
